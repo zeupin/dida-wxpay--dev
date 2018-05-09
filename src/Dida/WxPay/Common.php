@@ -44,8 +44,12 @@ class Common
      *
      * @return string
      */
-    public static function sign(array $data, $sign_key)
+    public static function sign(array &$data, $sign_key)
     {
+        // 把键值按照ASCII码排序
+        ksort($data);
+
+        // 工作数组
         $temp = [];
 
         // 滤除为空的参数
@@ -58,16 +62,11 @@ class Common
         // sign不参与校验
         unset($temp["sign"]);
 
-        // 把键值按照ASCII码排序
-        ksort($temp);
-
         // 加上key
         $temp["key"] = $sign_key;
 
         // 生成raw
         $raw = http_build_query($temp);
-
-        var_dump($raw);
 
         // hash
         $hash = md5($raw);
@@ -80,21 +79,49 @@ class Common
 
 
     /**
-     * 将array格式转为xml格式
+     * 将关联数组格式转为xml格式
      *
-     * @param array $data
+     * @param array $array
      */
-    public static function toXml(array $data)
+    public static function arrayToXml(array $array)
     {
         $output = [];
 
         $output[] = "<xml>";
-        foreach ($data as $name => $value) {
-            $output[] = "<$name>" . urlencode($value) . "</$name>";
+        foreach ($array as $name => $value) {
+            $output[] = "<$name><![CDATA[{$value}]]></$name>";
         }
         $output[] = "</xml>";
 
         return implode('', $output);
+    }
+
+
+    /**
+     * 将xml格式转为关联数组格式
+     *
+     * @param string $xml
+     *
+     * @return array|false 成功返回对应的array，失败返回false
+     */
+    public static function xmlToArray($xml)
+    {
+        // 用SimpleXML将XML转换为对象
+        $temp = simplexml_load_string($xml, 'SimpleXMLElement');
+
+        // 如果转换失败
+        if ($temp === false) {
+            return false;
+        }
+
+        // 转为array
+        $output = [];
+        foreach ($temp as $key => $value) {
+            $output[$key] = "$value";
+        }
+
+        // 输出
+        return $output;
     }
 
 

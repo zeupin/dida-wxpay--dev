@@ -105,9 +105,20 @@ class UnifiedOrder
         $temp["sign"] = Common::sign($temp, $data['sign_key']);
 
         // 转为xml
-        $xml = Common::toXml($temp);
+        $xml = Common::arrayToXml($temp);
+        \Dida\Log\Log::write("request=$xml");
 
-        var_dump($xml);
+        // 联机申请
+        $curl = new \Dida\CURL\CURL();
+        $response = $curl->request([
+            'url'    => self::APIURL,
+            'method' => 'POST',
+            'data'   => $xml,
+        ]);
+        \Dida\Log\Log::write($response);
+
+        // 返回
+        return $response;
     }
 
 
