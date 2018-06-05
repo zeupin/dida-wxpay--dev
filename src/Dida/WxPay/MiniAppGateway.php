@@ -10,10 +10,11 @@
 namespace Dida\WxPay;
 
 /**
- * MiniAppGateway
+ * MiniAppGateway 微信小程序支付网关
  */
-class MiniAppGateway extends Gateway
+class MiniAppGateway
 {
+    protected $conf = [];
 
 
     /**
@@ -55,5 +56,59 @@ class MiniAppGateway extends Gateway
 
         // 返回申请结果
         return $result;
+    }
+
+
+    /**
+     * 当收到了微信发来的支付结果通知
+     *
+     * @param string $xml
+     *
+     * 如下是个微信发回的支付通知数据(私有数据用...代替)
+     *
+     * @return [CMD] 如果验证xml是可信的，返回xml对应的数组形式
+     *
+      <xml>
+      <appid><![CDATA[...]]></appid>
+      <bank_type><![CDATA[CFT]]></bank_type>
+      <cash_fee><![CDATA[34]]></cash_fee>
+      <fee_type><![CDATA[CNY]]></fee_type>
+      <is_subscribe><![CDATA[N]]></is_subscribe>
+      <mch_id><![CDATA[...]]></mch_id>
+      <nonce_str><![CDATA[rY91BsyISN]]></nonce_str>
+      <openid><![CDATA[...]]></openid>
+      <out_trade_no><![CDATA[...]]></out_trade_no>
+      <result_code><![CDATA[SUCCESS]]></result_code>
+      <return_code><![CDATA[SUCCESS]]></return_code>
+      <sign><![CDATA[...]]></sign>
+      <time_end><![CDATA[20180605101716]]></time_end>
+      <total_fee>34</total_fee>
+      <trade_type><![CDATA[JSAPI]]></trade_type>
+      <transaction_id><![CDATA[...]]></transaction_id>
+      </xml>
+     */
+    public function receivedNotify($xml, $mch_key)
+    {
+        // 把xml转为数组形式
+        $msg = Common::xmlToArray($xml);
+
+        // 如果xml无效
+        if ($msg === false) {
+            \Dida\Log\Log::write("无效的微信支付通知xml");
+            \Dida\Log\Log::write($xml);
+            return [1, "支付通知不是一个有效的xml", null];
+        }
+
+        // 校验签名
+        $result = Common::verify($msg, $mch_key);
+
+        // 如果签名正确，返回$msg
+        // 业务数据是否正确，不是在这里验证，是具体app中验证。
+        // 这里只关心返回的数据是否可靠。
+        if ($result) {
+            return [0, null, $msg];
+        } else {
+            return [1, "验证支付结果通知的签名失败，此消息不被信任", $msg];
+        }
     }
 }
