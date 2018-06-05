@@ -111,4 +111,21 @@ class MiniAppGateway
             return [1, "验证支付结果通知的签名失败，此消息不被信任", $msg];
         }
     }
+
+
+    /**
+     * 如果app确认支付结果符合预期，可以调用本函数，发送成功应答。
+     * 微信支付收到本成功应答后，后面就不再发送同一交易的结果通知了。
+     *
+     * @return string
+     */
+    public function notifyOK()
+    {
+        return <<<TEXT
+<xml>
+  <return_code><![CDATA[SUCCESS]]></return_code>
+  <return_msg><![CDATA[OK]]></return_msg>
+</xml>
+TEXT;
+    }
 }
