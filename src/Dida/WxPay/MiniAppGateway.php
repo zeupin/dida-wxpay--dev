@@ -114,7 +114,7 @@ class MiniAppGateway
 
 
     /**
-     * 如果app确认支付结果符合预期，可以调用本函数，发送成功应答。
+     * 支付结果通知符合预期，可以调用本函数，发送一个成功应答。
      * 微信支付收到本成功应答后，后面就不再发送同一交易的结果通知了。
      *
      * @return string
@@ -127,5 +127,23 @@ class MiniAppGateway
   <return_msg><![CDATA[OK]]></return_msg>
 </xml>
 TEXT;
+    }
+
+
+    /**
+     * 支付结果通知失败，可以调用本函数，发送一个失败应答。
+     *
+     * @param string $errinfo 具体失败原因，如： 签名失败, 参数格式校验错误 等。
+     *
+     * @return string
+     */
+    public function notifyFail($errinfo)
+    {
+        $response = [
+            "return_code" => "FAIL",
+            "return_msg"  => $errinfo
+        ];
+
+        return Common::arrayToXml($response);
     }
 }
