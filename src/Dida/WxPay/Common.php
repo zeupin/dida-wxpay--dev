@@ -11,6 +11,9 @@ namespace Dida\WxPay;
 
 /**
  * Common
+ *
+ * 备注
+ * 1.所有涉及 URL/URI 编码的，一律采用更好的 RFC3986，不采用 RFC1738。
  */
 class Common
 {
@@ -44,10 +47,13 @@ class Common
      *
      * @return string
      */
-    public static function sign(array &$data, $sign_key)
+    public static function sign(array $data, $sign_key)
     {
         // 把键值按照ASCII码排序
         ksort($data);
+
+        // sign不参与校验
+        unset($data["sign"]);
 
         // 工作数组
         $temp = [];
@@ -55,26 +61,51 @@ class Common
         // 滤除为空的参数
         foreach ($data as $k => $v) {
             if ($v) {
-                $temp[$k] = $v;
+                $temp[] = "$k=$v";
             }
         }
 
-        // sign不参与校验
-        unset($temp["sign"]);
-
         // 加上key
-        $temp["key"] = $sign_key;
+        $temp[] = "key={$sign_key}";
 
-        // 生成raw
-        $raw = http_build_query($temp);
+        // 编码成URL查询参数格式
+        $raw = implode('&', $temp);
+        \Dida\Log\Log::write($raw);
 
         // hash
         $hash = md5($raw);
 
         // 转为大写
         $hash = strtoupper($hash);
+        \Dida\Log\Log::write($hash);
 
+        // 返回
         return $hash;
+    }
+
+
+    /**
+     * 验证签名是否一致
+     *
+     * @param array $array
+     */
+    public static function verify(array $msg, $key)
+    {
+        // 如果msg不存在sign字段，直接认为签名校验失败
+        if (!isset($msg['sign'])) {
+            return false;
+        }
+
+        // 提取msg中的sign字段
+        $sign = $msg["sign"];
+
+        // 生成签名串
+        $check = self::sign($msg, $key);
+
+        \Dida\Log\Log::write("$sign == $check ?");
+
+        // 比对两个签名串是否一致
+        return ($sign === $check);
     }
 
 
@@ -89,7 +120,7 @@ class Common
 
         $output[] = "<xml>";
         foreach ($array as $name => $value) {
-            $output[] = "<$name><![CDATA[{$value}]]></$name>";
+            $output[] = "<{$name}><![CDATA[{$value}]]></{$name}>";
         }
         $output[] = "</xml>";
 

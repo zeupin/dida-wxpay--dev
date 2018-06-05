@@ -10,7 +10,7 @@
 namespace Dida\WxPay;
 
 /**
- * UnifiedOrder 微信统一下单
+ * UnifiedOrder 统一下单
  */
 class UnifiedOrder
 {
@@ -102,23 +102,56 @@ class UnifiedOrder
         $temp["sign_type"] = "MD5";
 
         // 签名
+        ksort($temp);
         $temp["sign"] = Common::sign($temp, $data['sign_key']);
 
         // 转为xml
         $xml = Common::arrayToXml($temp);
         \Dida\Log\Log::write("request=$xml");
 
-        // 联机申请
+        // 联机提交
         $curl = new \Dida\CURL\CURL();
-        $response = $curl->request([
+        $result = $curl->request([
             'url'    => self::APIURL,
             'method' => 'POST',
             'data'   => $xml,
         ]);
-        \Dida\Log\Log::write($response);
+        \Dida\Log\Log::write($result);
+
+        // 解析应答
+        list($code, $msg, $xml) = $result;
+
+        // 如果应答有错，直接返回
+        if ($code !== 0) {
+            return [$code, $msg, null];
+        }
+
+        // 验证应答是否合法
+        $rcv = Common::xmlToArray($xml);
+        $verify = Common::verify($rcv, $data['sign_key']);
+        if ($verify === false) {
+            return [1, "应答的签名校验失败", null];
+        }
+
+        // 再次签名
+        $appId = $data['appid'];
+        $timeStamp = time();
+        $nonceStr = Common::randomString(10);
+        $package = "prepay_id={$rcv["prepay_id"]}";
+        $pay = [
+            'appId'     => $appId,
+            'timeStamp' => "$timeStamp",
+            'nonceStr'  => $nonceStr,
+            'package'   => $package,
+            'signType'  => 'MD5',
+        ];
+        ksort($pay);
+        $paySign = Common::sign($pay, $data['sign_key']);
+        $pay['paySign'] = $paySign;
+        //unset($pay['appId']);
 
         // 返回
-        return $response;
+        return [0, null, $pay];
     }
 
 
