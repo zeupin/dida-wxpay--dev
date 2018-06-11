@@ -25,19 +25,19 @@ class UnifiedOrder
     const APIURL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
 
     /**
-     * 有效的字段名
+     * 有效字段列表
      *
      * @var array
      */
-    static $fieldset = [
+    static $valid_fields = [
         /* 必填参数 */
-        'appid'        => '', // 微信分配的小程序ID
-        'mch_id'       => '', // 微信支付分配的商户id
-        'trade_type'   => '', // 交易类型
-        'out_trade_no' => '', // 商户订单号
-        'total_fee'    => '', // 标价金额。单位为“分”
-        'body'         => '', // 商品简单描述
-        'notify_url'   => '', // 支付结果通知地址
+        'appid'        => 'required', // 微信分配的小程序ID
+        'mch_id'       => 'required', // 微信支付分配的商户id
+        'trade_type'   => 'required', // 交易类型
+        'out_trade_no' => 'required', // 商户订单号
+        'total_fee'    => 'required', // 标价金额。单位为“分”
+        'body'         => 'required', // 商品简单描述
+        'notify_url'   => 'required', // 支付结果通知地址
 
         /* 自动生成的必填参数 */
         'nonce_str'        => 'auto', // 随机字符串
@@ -77,7 +77,7 @@ class UnifiedOrder
 
         // 过滤，只保留指定的数值
         foreach ($data as $key => $value) {
-            if (array_key_exists($key, self::$fieldset)) {
+            if (array_key_exists($key, self::$valid_fields)) {
                 $temp[$key] = $value;
             }
         }
@@ -91,7 +91,7 @@ class UnifiedOrder
         }
 
         // 预检
-        list($code, $msg) = $this->check($temp);
+        list($code, $msg) = $this->checkFields($temp);
 
         // 如果预检失败，直接返回
         if ($code !== 0) {
@@ -149,7 +149,6 @@ class UnifiedOrder
         $paySign = Common::sign($pay, $data['sign_key']);
         $pay['paySign'] = $paySign;
         //unset($pay['appId']);
-
         // 返回
         return [0, null, $pay];
     }
@@ -158,17 +157,17 @@ class UnifiedOrder
     /**
      * 检查待提交数据是否满足微信支付的要求
      *
-     * @return array [$code, $msg]
+     * @return array [CMD]
      */
-    protected function check(array $data)
+    protected function checkFields(array $data)
     {
         // 检查必填参数是否均已设置
-        foreach (self::$fieldset as $name => $flag) {
+        foreach (self::$valid_fields as $name => $flag) {
             switch ($flag) {
-                case '':
+                case 'required':
                 case 'auto':
                     if (!Common::field_exists($name, $data)) {
-                        return [1, "缺少必填参数 {$name}"];
+                        return [1, "必填参数 {$name} 未设置", null];
                     }
             }
         }
@@ -176,16 +175,16 @@ class UnifiedOrder
         // 检查条件必填参数
         if ($data["trade_type"] === "JSAPI") {
             if (!Common::field_exists('openid', $data)) {
-                return [2, "JSAPI类型交易必填 openid"];
+                return [2, "JSAPI类型交易必填 openid", null];
             }
         }
         if ($data['trade_type'] === 'NATIVE') {
             if (!Common::field_exists('product_id', $data)) {
-                return [2, "微信扫码支付必填 product_id"];
+                return [2, "微信扫码支付必填 product_id", null];
             }
         }
 
         // 返回
-        return [0, null];
+        return [0, null, null];
     }
 }

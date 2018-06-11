@@ -191,4 +191,28 @@ class Common
     {
         return (isset($data[$field]) && $data[$field]);
     }
+
+
+    /**
+     * 把$input中的无效字段剔除，只返回包含有效字段的数组
+     *
+     * @param array $field_list 有效字段列表
+     * @param array $input
+     *
+     * @return array
+     */
+    public static function filterFields(array $field_list, array $input)
+    {
+        $output = [];
+
+        // 只保留有效字段
+        foreach ($input as $name => $v) {
+            if (array_key_exists($name, $field_list)) {
+                $output[$name] = $v;
+            }
+        }
+
+        // 返回
+        return $output;
+    }
 }
