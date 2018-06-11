@@ -33,7 +33,7 @@ class MiniAppGateway
      *
      * @param array $data
      */
-    public function apply(array $data)
+    public function prepay(array $data)
     {
         // 预置参数
         $preset = [
@@ -52,7 +52,7 @@ class MiniAppGateway
         $uniorder = new UnifiedOrder;
 
         // 申请
-        $result = $uniorder->apply($temp);
+        $result = $uniorder->prepay($temp);
 
         // 返回申请结果
         return $result;
@@ -60,13 +60,11 @@ class MiniAppGateway
 
 
     /**
-     * 当收到了微信发来的支付结果通知
+     * 当收到了微信发来的支付结果通知，将其解析出来
      *
      * @param string $xml
      *
-     * 如下是个微信发回的支付通知数据(私有数据用...代替)
-     *
-     * @return [CMD] 如果验证xml是可信的，返回xml对应的数组形式
+     * 如下是个微信发回的支付通知数据(敏感数据用...代替)
      *
       <xml>
       <appid><![CDATA[...]]></appid>
@@ -86,8 +84,10 @@ class MiniAppGateway
       <trade_type><![CDATA[JSAPI]]></trade_type>
       <transaction_id><![CDATA[...]]></transaction_id>
       </xml>
+     *
+     * @return [CMD] 如果验证xml是可信的，返回xml对应的关联数组
      */
-    public function receivedNotify($xml, $mch_key)
+    public function parseNotify($xml, $mch_key)
     {
         // 把xml转为数组形式
         $msg = Common::xmlToArray($xml);
@@ -103,8 +103,8 @@ class MiniAppGateway
         $result = Common::verify($msg, $mch_key);
 
         // 如果签名正确，返回$msg
-        // 业务数据是否正确，不是在这里验证，是具体app中验证。
-        // 这里只关心返回的数据是否可靠。
+        // 业务数据是否正确，不是在这里验证，是在具体app中验证。
+        // 这里只关心微信端返回的数据是否可信。
         if ($result) {
             return [0, null, $msg];
         } else {
@@ -114,8 +114,8 @@ class MiniAppGateway
 
 
     /**
-     * 支付结果通知符合预期，可以调用本函数，发送一个成功应答。
-     * 微信支付收到本成功应答后，后面就不再发送同一交易的结果通知了。
+     * 支付结果通知符合预期，可以调用本函数，向腾讯端发送一个成功应答。
+     * 腾讯端收到成功应答后，后面就不再发送同一交易的结果通知了。
      *
      * @return string
      */

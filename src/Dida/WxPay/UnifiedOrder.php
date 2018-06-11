@@ -70,7 +70,7 @@ class UnifiedOrder
      *
      * @return array [$code, $msg, $result]
      */
-    public function apply(array $data)
+    public function prepay(array $data)
     {
         // 最终提交的数据
         $temp = [];
