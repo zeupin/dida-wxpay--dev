@@ -17,7 +17,7 @@ class UnifiedOrder
     /**
      * 版本号
      */
-    const VERSION = '20180505';
+    const VERSION = '20180612';
 
     /**
      * API的URL
