@@ -133,6 +133,11 @@ class UnifiedOrder
             return [1, "应答的签名校验失败", null];
         }
 
+        // 检查prepay的result_code是否为FAIL
+        if ($rcv["result_code"] == "FAIL") {
+            return [$rcv["err_code"], $rcv["err_code_des"], null];
+        }
+
         // 再次签名
         $appId = $data['appid'];
         $timeStamp = time();
