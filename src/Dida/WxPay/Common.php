@@ -70,14 +70,12 @@ class Common
 
         // 编码成URL查询参数格式
         $raw = implode('&', $temp);
-        \Dida\Log\Log::write($raw);
 
         // hash
         $hash = md5($raw);
 
         // 转为大写
         $hash = strtoupper($hash);
-        \Dida\Log\Log::write($hash);
 
         // 返回
         return $hash;
@@ -101,8 +99,6 @@ class Common
 
         // 生成签名串
         $check = self::sign($msg, $key);
-
-        \Dida\Log\Log::write("$sign == $check ?");
 
         // 比对两个签名串是否一致
         return ($sign === $check);
