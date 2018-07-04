@@ -19,6 +19,17 @@ class Common
 {
 
 
+    public function __construct()
+    {
+        /*
+         * 禁用外部实体引用
+         * 以避免XML外部实体注入漏洞(XML External Entity Injection，简称 XXE)。
+         * https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=23_5
+         */
+        libxml_disable_entity_loader(true);
+    }
+
+
     /**
      * 生成随机字符串
      *
