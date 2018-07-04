@@ -71,11 +71,13 @@ class MiniAppGateway
 
 
     /**
-     * 向腾讯端主动查询支付结果
+     * 向腾讯端查询支付结果
      *
      * @param array $data
      *
-     * @return [CMD]
+     * @return [CMD] 返回查询结果。
+     *     注意，返回结果中，业务结果 result_code 有可能是 SUCCESS/FAIL。
+     *     如果是FAIL，应用中要有对应的处理。
      */
     public function query($data)
     {
